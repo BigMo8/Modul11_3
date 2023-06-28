@@ -1,0 +1,49 @@
+def convert_dates(x):
+                try:
+                    return dt.day_name()
+                except:
+                    return dt.datetime.strptime(x,'%d/%m/%Y').day_name()              
+            transactions['tran_date'] = transactions['tran_date'].apply(lambda x: convert_dates(x))
+            return transactions
+
+
+
+# zmiana liczby zakładek:
+#opis layoutu
+app.layout = html.Div([html.Div([dcc.Tabs(id='tabs',value='tab-1',children=[
+                            dcc.Tab(label='Sprzedaż globalna',value ='tab-1'),
+                            dcc.Tab(label='Produkty',value ='tab-2'),
+                            dcc.Tab(label='Kanały sprzedaży - dni tygodnia', value ='tab-3'),
+                            dcc.Tab(label = 'Kanały sprzedaży - klienci', value ='tab-4')
+                            ]),
+                            html.Div(id='tabs-content')
+                    ],style={'width':'80%','margin':'auto'})],
+                    style={'height':'100%'})
+
+#callback
+@app.callback(Output('tabs-content','children'),[Input('tabs','value')])
+def render_content(tab):
+
+    if tab == 'tab-1':
+        return tab1.render_tab(df.merged)
+    elif tab == 'tab-2':
+        return tab2.render_tab(df.merged)
+    elif tab == 'tab-3':
+        return tab3.render_tab(df.merged)
+    elif tab == 'tab-4':
+        return tab4.render_tab(df.merged)
+    
+## tab2 callbacks   
+@app.callback(Output('barh-Store-type','figure'),
+            [Input('Store-type_dropdown','value')])
+def tab3_barh_Store_type(chosen_store):
+
+    grouped = df.merged[(df.merged['total_amt']>0)&(df.merged['Store_type']==chosen_store)].pivot_table(index='Store_type',columns='tran_date',values='total_amt',aggfunc='sum').assign(_sum=lambda x: x['0']+x['1']+x['2']+x['3']+x['4']+x['5']+x['6']).sort_values(by='_sum').round(2)
+
+    traces = []
+    for col in ['0', '1', '2', '3', '4', '5', '6']:
+        traces.append(go.Bar(x=grouped[col],y=grouped.index,orientation='h',name=col))
+
+    data = traces
+    fig = go.Figure(data=data,layout=go.Layout(barmode='stack',margin={'t':20,}))
+    return fig
