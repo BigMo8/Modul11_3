@@ -15,9 +15,10 @@ import tab2
 class db:
     def __init__(self):
         self.transactions = db.transation_init()
-        self.cc = pd.read_csv(r'db\country_codes.csv',index_col=0)
-        self.customers = pd.read_csv(r'db\customers.csv',index_col=0)
-        self.prod_info = pd.read_csv(r'db\prod_cat_info.csv')
+        self.cc = pd.read_csv(r'db\country_codes.csv',encoding='utf-8',index_col=0)
+        self.customers = pd.read_csv(r'db\customers.csv',encoding='utf-8',index_col=0)
+        self.prod_info = pd.read_csv(r'db\prod_cat_info.csv',encoding='utf-8')
+        #pd.read_csv('file_name.csv', encoding='utf-8')
         
     @staticmethod
     def transation_init():
@@ -25,15 +26,15 @@ class db:
         src = r'db\transactions'    
         for filename in os.listdir(src):
             #os.listdir() method in python is used to get the list of all files and directories in the specified directory
-            transactions = transactions.append(pd.read_csv(os.path.join(src,filename),index_col=0))
+            transactions = transactions.append(pd.read_csv(os.path.join(src,filename),index_col=0, encoding='utf-8'))
 
         def convert_dates(x):
             try:
-                return dt.datetime.strptime(x,'%d-%m-%Y')
+                return dt.datetime.strptime(x,"%d-%m-%Y")
             except:
-                return dt.datetime.strptime(x,'%d/%m/%Y')
-            transactions['tran_date'] = transactions['tran_date'].apply(lambda x: convert_dates(x))
-            return transactions
+                return dt.datetime.strptime(x,"%d/%m/%Y")
+        transactions['tran_date'] = transactions['tran_date'].apply(lambda x: convert_dates(x))
+        return transactions
 
     #połączyć bazę z transakcjami z odpowiednimi kategoriami produktów, płcią klienta oraz krajem sprzedaży.
     def merge(self):
@@ -46,10 +47,10 @@ class db:
     #łączymy ww. tabelę df z tabelą customers
         df = df.join(self.customers.join(self.cc,on='country_code')
                      .set_index('customer_Id'),on='cust_id')
-
+    
         self.merged = df
-        df = db()
-        df.merge()
+df = db()
+df.merge()
 
 #Dash is running on http://127.0.0.1:8050/
 
