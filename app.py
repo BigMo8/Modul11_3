@@ -1,5 +1,6 @@
-import pandas as pd
+from datetime import datetime
 import datetime as dt
+import pandas as pd
 import os
 import dash
 #import dash_core_components as dcc
@@ -30,26 +31,24 @@ class db:
 
         def convert_dates(x):
             try:
-                return dt.datetime.strptime(x,"%d-%m-%Y")
+                return dt.strptime(x,"%d-%m-%Y")
             except:
-                return dt.datetime.strptime(x,"%d/%m/%Y")
+                return dt.strptime(x,"%d/%m/%Y")
+        #module datetime has no attr. strptime - wg dokumentacji pandas ma... 
         transactions['tran_date'] = transactions['tran_date'].apply(lambda x: convert_dates(x))
         return transactions
 
     #połączyć bazę z transakcjami z odpowiednimi kategoriami produktów, płcią klienta oraz krajem sprzedaży.
     def merge(self):
-        #łączymy transakcje po kodzie produktu
-        df = self.transactions.join(self.prod_info.drop_duplicates(subset=['prod_cat_code'])
-                                    .set_index('prod_cat_code')['prod_cat'],on='prod_cat_code',how='left')
-    #łaczymy ww. tabelę df z prod_info po kolumnie prod_subcat_code
-        df = df.join(self.prod_info.drop_duplicates(subset=['prod_sub_cat_code'])
-                     .set_index('prod_sub_cat_code')['prod_subcat'],on='prod_subcat_code',how='left')
-    #łączymy ww. tabelę df z tabelą customers
-        df = df.join(self.customers.join(self.cc,on='country_code')
-                     .set_index('customer_Id'),on='cust_id')
+            #łączymy transakcje po kodzie produktu
+        df = self.transactions.join(self.prod_info.drop_duplicates(subset=['prod_cat_code']).set_index('prod_cat_code')['prod_cat'],on='prod_cat_code',how='left')
+            #łaczymy ww. tabelę df z prod_info po kolumnie prod_subcat_code
+        df = df.join(self.prod_info.drop_duplicates(subset=['prod_sub_cat_code']).set_index('prod_sub_cat_code')['prod_subcat'],on='prod_subcat_code',how='left')
+            #łączymy ww. tabelę df z tabelą customers
+        df = df.join(self.customers.join(self.cc,on='country_code').set_index('customer_Id'),on='cust_id')
     
         self.merged = df
-df = db()
+df = db()   
 df.merge()
 
 #Dash is running on http://127.0.0.1:8050/
